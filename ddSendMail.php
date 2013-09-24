@@ -1,7 +1,7 @@
 <?php
 /**
  * ddSendMail.php
- * @version 1.5.1 (2013-03-29)
+ * @version 1.5.2 (2013-09-21)
  *
  * Snippet for sending e-mails.
  *
@@ -11,7 +11,7 @@
  * @param from {string} - Mailer address. Default: 'info@divandesign.ru'.
  * @param inputName {comma separated string} - “input” tags names from which accepted files are taken. Default: ''.
  *
- * @link http://code.divandesign.biz/modx/ddsendmail/1.5.1
+ * @link http://code.divandesign.biz/modx/ddsendmail/1.5.2
  *
  * @copyright 2013, DivanDesign
  * http://www.DivanDesign.biz
@@ -87,11 +87,14 @@ $result = array();
 
 $email = explode(',', $email);
 foreach ($email as $val){
-	//Отправляем письмо 
-	if(mail($val, $subject, '', $headers)){
-		$result[] = 1;
-	}else{
-		$result[] = 0;
+	//Если адрес валидный
+	if (filter_var($val, FILTER_VALIDATE_EMAIL)){
+		//Отправляем письмо 
+		if(mail($val, $subject, '', $headers)){
+			$result[] = 1;
+		}else{
+			$result[] = 0;
+		}
 	}
 }
 
