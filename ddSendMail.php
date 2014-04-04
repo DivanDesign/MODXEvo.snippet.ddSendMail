@@ -1,19 +1,19 @@
 <?php
 /**
  * ddSendMail.php
- * @version 1.5.2 (2013-09-21)
- *
- * Snippet for sending e-mails.
- *
- * @param email {comma separated string} - Addresses to mail. @required
- * @param subject {string} - E-mail subject. Default: 'Mail from '.$modx->config['site_url'].
- * @param text {string} - E-mail text. @required
- * @param from {string} - Mailer address. Default: 'info@divandesign.ru'.
- * @param inputName {comma separated string} - “input” tags names from which accepted files are taken. Default: ''.
- *
- * @link http://code.divandesign.biz/modx/ddsendmail/1.5.2
- *
- * @copyright 2013, DivanDesign
+ * @version 1.5.3 (2014-04-04)
+ * 
+ * @desc Snippet for sending e-mails.
+ * 
+ * @param $email {comma separated string} - Addresses to mail. @required
+ * @param $subject {string} - E-mail subject. Default: 'Mail from '.$modx->config['site_url'].
+ * @param $text {string} - E-mail text. @required
+ * @param $from {string} - Mailer address. Default: 'info@divandesign.ru'.
+ * @param $inputName {comma separated string} - “input” tags names from which accepted files are taken. Default: ''.
+ * 
+ * @link http://code.divandesign.biz/modx/ddsendmail/1.5.3
+ * 
+ * @copyright 2014, DivanDesign
  * http://www.DivanDesign.biz
  */
 
@@ -40,43 +40,45 @@ $multipart = "Content-Type: multipart/mixed; boundary = \"".$bound."\"\r\n\r\n--
 if(isset($text)){
 	$multipart .= "\r\nContent-Type: text/html; charset=UTF-8 \r\n\r\n".$text."\r\n\r\n--".$bound;
 }
-	
-$inputName = explode(',', $inputName);
 
-//Перебираем имена полей с файлами
-$attachFiles = array();
-foreach($inputName as $value){
-	//Проверяем находиться ли в POST массив
-	if(is_array($_FILES[$value]['name'])){
-		//Если массив пустой обрываем итерацию
-		if(!$_FILES[$value]['tmp_name'][0]){break;}
-		
-		//Перебираем пост
-		foreach($_FILES[$value]['name'] as $key => $name){
+if(isset($inputName)){
+	$inputName = explode(',', $inputName);
+	
+	//Перебираем имена полей с файлами
+	$attachFiles = array();
+	foreach($inputName as $value){
+		//Проверяем находиться ли в POST массив
+		if(is_array($_FILES[$value]['name'])){
+			//Если массив пустой обрываем итерацию
+			if(!$_FILES[$value]['tmp_name'][0]){break;}
+			
+			//Перебираем пост
+			foreach($_FILES[$value]['name'] as $key => $name){
+				//Если нет ошибок
+				if ($_FILES[$value]['error'][$key] == 0){
+					//Добавляем в массив файлы
+					$attachFiles[$name] = fread(fopen($_FILES[$value]['tmp_name'][$key], 'r'), filesize($_FILES[$value]['tmp_name'][$key]));
+				}
+			}
+		}else{
+			//Если массив пустой обрываем итерацию
+			if(!$_FILES[$value]['tmp_name']){break;}
 			//Если нет ошибок
-			if ($_FILES[$value]['error'][$key] == 0){
-				//Добавляем в массив файлы
-				$attachFiles[$name] = fread(fopen($_FILES[$value]['tmp_name'][$key], 'r'), filesize($_FILES[$value]['tmp_name'][$key]));
+			if ($_FILES[$value]['error'] == 0){
+				//Если не массив, то добавляем один файл
+				$attachFiles[$_FILES[$value]['name']] = fread(fopen($_FILES[$value]['tmp_name'], 'r'), filesize($_FILES[$value]['tmp_name']));
 			}
 		}
-	}else{
-		//Если массив пустой обрываем итерацию
-		if(!$_FILES[$value]['tmp_name']){break;}
-		//Если нет ошибок
-		if ($_FILES[$value]['error'] == 0){
-			//Если не массив, то добавляем один файл
-			$attachFiles[$_FILES[$value]['name']] = fread(fopen($_FILES[$value]['tmp_name'], 'r'), filesize($_FILES[$value]['tmp_name']));
-		}
 	}
-}
-
-//Перебираем присоединяемые файлы
-if(!empty($attachFiles)){
-	foreach($attachFiles as $name=>$value){
-	$multipart .= "\r\n".
-		'Content-Type: application/octet-stream; name = "=?UTF-8?B?'.base64_encode($name)."?=\"\r\n".
-		"Content-Transfer-Encoding: base64\r\n\r\n".
-		base64_encode($value)."\r\n\r\n--".$bound;
+	
+	//Перебираем присоединяемые файлы
+	if(!empty($attachFiles)){
+		foreach($attachFiles as $name=>$value){
+			$multipart .= "\r\n".
+				'Content-Type: application/octet-stream; name = "=?UTF-8?B?'.base64_encode($name)."?=\"\r\n".
+				"Content-Transfer-Encoding: base64\r\n\r\n".
+				base64_encode($value)."\r\n\r\n--".$bound;
+		}
 	}
 }
 
